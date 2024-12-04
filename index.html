@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #74ebd5, #9face6);
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            width: 90%;
+            max-width: 800px;
+            height: 90%;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            overflow: hidden;
+        }
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        #clients {
+            height: 80px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #send {
+            padding: 10px 20px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #send:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Чат</h1>
+        <div id="chat"></div>
+        <div id="clients">Онлайн клиенты:</div>
+        <div class="input-container">
+            <input type="text" id="input" placeholder="Введите сообщение...">
+            <button id="send">Отправить</button>
+        </div>
+    </div>
+
+    <script>
+        const chat = document.getElementById("chat");
+        const clients = document.getElementById("clients");
+        const input = document.getElementById("input");
+        const send = document.getElementById("send");
+
+        const ws = new WebSocket("ws://localhost:8888/websocket");
+
+        ws.onopen = () => {
+            console.log("WebSocket подключен");
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === "message") {
+                const messageElem = document.createElement("div");
+                messageElem.textContent = data.data;
+                chat.appendChild(messageElem);
+                chat.scrollTop = chat.scrollHeight; // Прокрутка вниз
+            } else if (data.type === "online_clients") {
+                clients.textContent = "Онлайн клиенты: " + data.clients.join(", ");
+            }
+        };
+
+        send.addEventListener("click", () => {
+            const message = input.value.trim();
+            if (message) {
+                ws.send(message);
+                input.value = "";
+            }
+        });
+    </script>
+</body>
+</html>
